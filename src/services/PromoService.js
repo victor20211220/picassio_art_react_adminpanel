@@ -5,20 +5,15 @@ const getAll = () => {
 const get = id => {
     return http.get(`/promos/${id}`);
 };
-const create = data => {
-    return http.post("/promos", data);
-};
-const update = (id, data) => {
-    return http.post(`/promos/${id}`, data);
+const manage = (data, id) => {
+    if(typeof id === "undefined"){
+        return http.post("/promos", data);    
+    }else{
+        return http.post(`/promos/${id}`, data);
+    }
 };
 const remove = id => {
     return http.delete(`/promos/${id}`);
-};
-const removeAll = () => {
-    return http.delete(`/promos`);
-};
-const findByTitle = title => {
-    return http.get(`/promos?title=${title}`);
 };
 const bulkAction = (data) => {
     return http.post(`/promos/bulk`, data);
@@ -26,10 +21,7 @@ const bulkAction = (data) => {
 export default {
     getAll,
     get,
-    create,
-    update,
+    manage,
     remove,
-    removeAll,
-    findByTitle,
     bulkAction
 };

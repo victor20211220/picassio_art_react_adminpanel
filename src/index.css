@@ -16,3 +16,13 @@ code {
   color:#0d6efd !important;
   font-weight: bold;
 }
+nav .container{
+  padding: 0 24px;
+}
+.navbar-brand a, .nav-item a{
+  padding-left: 0;
+}
+.color-span{
+  width: 35px;
+  height: 35px;
+}

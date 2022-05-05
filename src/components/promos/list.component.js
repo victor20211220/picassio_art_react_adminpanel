@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import PromoService from '../../services/PromoService';
-import {positions} from '../../services/Positions';
+import { positions } from '../../services/Positions';
 
 import Button from 'react-bootstrap/Button'
 import Swal from 'sweetalert2'
@@ -95,7 +94,7 @@ export default function PromoList() {
         formData.append('_method', 'PATCH');
         formData.append("update_paid", 1);
         formData.append("is_paid", is_paid == true ? 0 : 1);
-        PromoService.update(id, formData).then(({ data }) => {
+        PromoService.manage(formData, id).then(({ data }) => {
             Swal.fire({
                 icon: "success",
                 text: data.message
@@ -152,79 +151,73 @@ export default function PromoList() {
     }
     const checkedCnt = rows.filter((e) => e.selected).length;
     return (
-        <div className="container">
-            <div className="row">
-                <div className='col-12'>
-                    <div className='float-right d-flex mb-2'>
-                        <Select
-                            value={bulkAction}
-                            onChange={changeBulkAction}
-                            options={bulkOptions}
-                            name="bulk_options"
-                            classNamePrefix="select"
-                        />
-                        <Button disabled={checkedCnt == 0 || bulkAction.length == 0} onClick={() => applyBulkAction()} className="ms-2">Apply</Button>
-                    </div>
-                </div>
-                <div className="col-12">
-                    <div className="card card-body">
-                        <div className="table-responsive">
-                            <table className="table table-bordered mb-0 text-center">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">
+        <>
+            <div className='float-right d-flex mb-2'>
+                <Select
+                    value={bulkAction}
+                    onChange={changeBulkAction}
+                    options={bulkOptions}
+                    name="bulk_options"
+                    classNamePrefix="select"
+                />
+                <Button disabled={checkedCnt == 0 || bulkAction.length == 0} onClick={() => applyBulkAction()} className="ms-2">Apply</Button>
+            </div>
+            <div className="table-responsive">
+                <table className="table table-bordered mb-0 text-center">
+                    <thead>
+                        <tr>
+                            <th scope="col">
+                                <input
+                                    type="checkbox"
+                                    className="form-check-input"
+                                    checked={masterChecked}
+                                    id="mastercheck"
+                                    onChange={(e) => onMasterCheck(e)}
+                                />
+                            </th>
+                            <th>Position</th>
+                            <th>Image</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Total Price</th>
+                            <th>Paid</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            rows.length > 0 && (
+                                rows.map((row, key) => (
+                                    <tr key={key}>
+                                        <th scope="row">
                                             <input
                                                 type="checkbox"
+                                                checked={row.selected}
                                                 className="form-check-input"
-                                                checked={masterChecked}
-                                                id="mastercheck"
-                                                onChange={(e) => onMasterCheck(e)}
+                                                onChange={(e) => onItemCheck(e, row)}
                                             />
                                         </th>
-                                        <th>Position</th>
-                                        <th>Image</th>
-                                        <th>Start Date</th>
-                                        <th>End Date</th>
-                                        <th>Paid</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {
-                                        rows.length > 0 && (
-                                            rows.map((row, key) => (
-                                                <tr key={key}>
-                                                    <th scope="row">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={row.selected}
-                                                            className="form-check-input"
-                                                            onChange={(e) => onItemCheck(e, row)}
-                                                        />
-                                                    </th>
-                                                    <td>{row.position_id != 0 && positions.find((position) => position.value == row.position_id).label}</td>
-                                                    <td>
-                                                        <img width="30px" alt='' src={`${apiUrl}/storage/promos/image/${row.image}`} />
-                                                    </td>
-                                                    <td>{row.start_date}</td>
-                                                    <td>{row.end_date}</td>
-                                                    <td>{row.is_paid ? "Yes" : "No"}</td>
-                                                    <td>
-                                                        <Button variant={row.is_paid ? "secondary" : "primary"} size="sm" className="ms-2" onClick={() => updatePaid(row.id, row.is_paid)}>
-                                                            {row.is_paid ? "Unpaid" : "Paid"}
-                                                        </Button>
+                                        <td>{row.position_id != 0 && positions.find((position) => position.value == row.position_id).label}</td>
+                                        <td>
+                                            <img width="30px" alt='' src={`${apiUrl}/storage/promos/image/${row.image}`} />
+                                        </td>
+                                        <td>{row.start_date}</td>
+                                        <td>{row.end_date}</td>
+                                        <td>{row.total_price}</td>
+                                        <td>{row.is_paid ? "Yes" : "No"}</td>
+                                        <td>
+                                            <Button variant={row.is_paid ? "secondary" : "primary"} size="sm" className="ms-2" onClick={() => updatePaid(row.id, row.is_paid)}>
+                                                {row.is_paid ? "Unpaid" : "Paid"}
+                                            </Button>
 
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )
+                        }
+                    </tbody>
+                </table>
             </div>
-        </div>
+        </>
     )
 }

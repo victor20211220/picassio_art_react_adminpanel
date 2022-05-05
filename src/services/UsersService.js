@@ -5,11 +5,12 @@ const getAll = () => {
 const get = id => {
     return http.get(`/users/${id}`);
 };
-const create = data => {
-    return http.post("/users", data);
-};
-const update = (id, data) => {
-    return http.post(`/users/${id}`, data);
+const manage = (data, id) => {
+    if(typeof id === "undefined"){
+        return http.post("/users", data);
+    }else{
+        return http.post(`/users/${id}`, data);
+    }
 };
 const remove = id => {
     return http.delete(`/users/${id}`);
@@ -23,8 +24,7 @@ const findByTitle = title => {
 export default {
     getAll,
     get,
-    create,
-    update,
+    manage,
     remove,
     removeAll,
     findByTitle

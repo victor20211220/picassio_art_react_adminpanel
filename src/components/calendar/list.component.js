@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CalendarService from '../../services/CalendarService';
-import {positions} from '../../services/Positions';
+import { positions } from '../../services/Positions';
 
 import Button from 'react-bootstrap/Button'
 import Swal from 'sweetalert2'
@@ -94,7 +94,7 @@ export default function CalendarList() {
         formData.append('_method', 'PATCH');
         formData.append("update_publish", 1);
         formData.append("is_published", is_published == true ? 0 : 1);
-        CalendarService.update(id, formData).then(({ data }) => {
+        CalendarService.manage(formData, id).then(({ data }) => {
             Swal.fire({
                 icon: "success",
                 text: data.message
@@ -151,88 +151,78 @@ export default function CalendarList() {
     }
     const checkedCnt = rows.filter((e) => e.selected).length;
     return (
-        <div className="container">
-            <div className="row">
-                <div className='col-12'>
-                    <div className='float-right d-flex mb-2'>
-                        <Select
-                            value={bulkAction}
-                            onChange={changeBulkAction}
-                            options={bulkOptions}
-                            name="bulk_options"
-                            classNamePrefix="select"
-                        />
-                        <Button disabled={checkedCnt == 0 || bulkAction.length == 0} onClick={() => applyBulkAction()} className="ms-2">Apply</Button>
-                        <Link className='btn btn-primary ms-2 float-end' to={"/calendar/add"}>
-                            Create
-                        </Link>
-                    </div>
-                </div>
-                <div className="col-12">
-                    <div className="card card-body">
-                        <div className="table-responsive">
-                            <table className="table table-bordered mb-0 text-center">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">
+        <>
+            <div className='float-right d-flex mb-2'>
+                <Select
+                    value={bulkAction}
+                    onChange={changeBulkAction}
+                    options={bulkOptions}
+                    name="bulk_options"
+                    classNamePrefix="select"
+                />
+                <Button disabled={checkedCnt == 0 || bulkAction.length == 0} onClick={() => applyBulkAction()} className="ms-2">Apply</Button>
+                <Link className='btn btn-primary ms-2 float-end' to={"/calendar/add"}>
+                    Create
+                </Link>
+            </div>
+            <div className="table-responsive">
+                <table className="table table-bordered mb-0 text-center">
+                    <thead>
+                        <tr>
+                            <th scope="col">
+                                <input
+                                    type="checkbox"
+                                    className="form-check-input"
+                                    checked={masterChecked}
+                                    id="mastercheck"
+                                    onChange={(e) => onMasterCheck(e)}
+                                />
+                            </th>
+                            <th>Title</th>
+                            <th>Mint Date</th>
+                            <th>Image</th>
+                            <th>Position</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            rows.length > 0 && (
+                                rows.map((row, key) => (
+                                    <tr key={key}>
+                                        <th scope="row">
                                             <input
                                                 type="checkbox"
+                                                checked={row.selected}
                                                 className="form-check-input"
-                                                checked={masterChecked}
-                                                id="mastercheck"
-                                                onChange={(e) => onMasterCheck(e)}
+                                                onChange={(e) => onItemCheck(e, row)}
                                             />
                                         </th>
-                                        <th>Title</th>
-                                        <th>Mint Date</th>
-                                        <th>Amount</th>
-                                        <th>Image</th>
-                                        <th>Position</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {
-                                        rows.length > 0 && (
-                                            rows.map((row, key) => (
-                                                <tr key={key}>
-                                                    <th scope="row">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={row.selected}
-                                                            className="form-check-input"
-                                                            onChange={(e) => onItemCheck(e, row)}
-                                                        />
-                                                    </th>
-                                                    <td>{row.title}</td>
-                                                    <td>{row.mint_date}</td>
-                                                    <td>{row.amount}</td>
-                                                    <td>
-                                                        <img width="30px" alt='' src={`${apiUrl}/storage/calendar/image/${row.image}`} />
-                                                    </td>
-                                                    <td>{row.position_id != 0 && positions.find((position) => position.value == row.position_id).label}</td>
-                                                    <td>
-                                                        <Link to={`/calendar/${row.id}`} className='btn btn-sm btn-success me-2'>
-                                                            Edit
-                                                        </Link>
-                                                        <Button variant="danger" size="sm" onClick={() => deleteRow(row.id)}>
-                                                            Delete
-                                                        </Button>
-                                                        <Button variant={row.is_published ? "secondary" : "primary"} size="sm" className="ms-2" onClick={() => updatePublish(row.id, row.is_published)}>
-                                                            {row.is_published ? "Unpublish" : "Publish"}
-                                                        </Button>
+                                        <td>{row.title}</td>
+                                        <td>{row.mint_date}</td>
+                                        <td>
+                                            <img width="30px" alt='' src={`${apiUrl}/storage/calendar/image/${row.image}`} />
+                                        </td>
+                                        <td>{row.position_id != 0 && positions.find((position) => position.value == row.position_id).label}</td>
+                                        <td>
+                                            <Link to={`/calendar/${row.id}`} className='btn btn-sm btn-success me-2'>
+                                                Edit
+                                            </Link>
+                                            <Button variant="danger" size="sm" onClick={() => deleteRow(row.id)}>
+                                                Delete
+                                            </Button>
+                                            <Button variant={row.is_published ? "secondary" : "primary"} size="sm" className="ms-2" onClick={() => updatePublish(row.id, row.is_published)}>
+                                                {row.is_published ? "Unpublish" : "Publish"}
+                                            </Button>
 
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )
+                        }
+                    </tbody>
+                </table>
             </div>
-        </div>
+        </>
     )
 }

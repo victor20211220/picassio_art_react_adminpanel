@@ -14,18 +14,10 @@ const update = (id, data) => {
 const remove = id => {
     return http.delete(`/projects/${id}`);
 };
-const removeAll = () => {
-    return http.delete(`/projects`);
-};
-const findByTitle = title => {
-    return http.get(`/projects?title=${title}`);
-};
 export default {
     getAll,
     get,
     create,
     update,
-    remove,
-    removeAll,
-    findByTitle
+    remove
 };

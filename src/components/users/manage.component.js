@@ -1,64 +1,74 @@
-import React, { useState } from "react";
-import BlockchainService from "../../services/BlockchainService";
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from "react";
+import UsersService from "../../services/UsersService";
+import { useNavigate, useParams } from 'react-router-dom'
 import { Form, Button, Row, Col } from 'react-bootstrap';
 import Swal from 'sweetalert2';
 
-
-const FormInput = (props) => {
-  const { label, type, name, blockchain, handleInputChange } = props;
-  return <Form.Group className="my-1">
+const FormInputGroup = (props) => {
+  const { label, type, name, user, handleInputChange } = props;
+  return <Form.Group>
     <Form.Label>{label}</Form.Label>
-    <Form.Control type={type} value={blockchain[name]} name={name} onChange={handleInputChange} />
+    <Form.Control type={type} value={user[name]} name={name} onChange={handleInputChange} />
   </Form.Group>
 }
 
-
-const FormInputFile = (props) => {
-  const { label, name, changeImageHandler } = props;
-  return <Form.Group className="my-1">
-    <Form.Label>{label}</Form.Label>
-    <Form.Control type="file" name={name} onChange={changeImageHandler} />
-  </Form.Group>
-}
-
-
-export default function CreateBlockchain() {
+export default function ManageUser(props) {
+  const isEdit = props.isEdit;
+  const { id } = useParams();
   const navigate = useNavigate();
-  const initialState = {
+  const initialUserState = {
     name: "",
-    image: "",
+    email: "",
+    password: "",
   };
 
-  const [blockchain, setBlockchain] = useState(initialState);
+  const [user, setUser] = useState(initialUserState);
   const handleInputChange = event => {
-    let { name, value } = event.target;
-    setBlockchain({ ...blockchain, [name]: value });
+    const { name, value } = event.target;
+    setUser({ ...user, [name]: value });
   };
 
-  const changeImageHandler = (event) => {
-    setBlockchain({ ...blockchain, [event.currentTarget.name]: event.target.files[0] });
-  };
+  
+  const fetchRow = () => {
+    UsersService.get(id).then(({data}) => {
+      let row = data.user;
+      row['password'] = "";
+      setUser(row);
+    }).catch(({response}) => {
+      Swal.fire({
+        text: response.data.message,
+        icon: "error"
+      })
+    })
+  }
 
-  console.log(blockchain);
+  // get row
+  useEffect(() => {
+    if(isEdit) fetchRow()
+  }, [])
 
+  
+  // form validation submit
   const [validationError, setValidationError] = useState({})
-
-  const saveBlockchain = async (e) => {
+  const saveUser = async (e) => {
     e.preventDefault();
-
     const formData = new FormData()
-    for (const field in blockchain) {
-      formData.append(field, blockchain[field]);
+    if(isEdit) formData.append('_method', 'PATCH');
+    for (const field in user) {
+      if(field === "password" && user[field] !== ""){
+        formData.append(field, user[field])
+      }else{
+        formData.append(field, user[field]);
+      }
     }
 
-    BlockchainService.create(formData)
+    UsersService.manage(formData, id)
       .then(({ data }) => {
         Swal.fire({
           icon: "success",
           text: data.message
         })
-        navigate("/blockchains");
+        navigate("/users");
       }).catch(({ response }) => {
         if (response.status === 422) {
           setValidationError(response.data.errors)
@@ -71,14 +81,13 @@ export default function CreateBlockchain() {
       })
   }
 
-
   return (
     <div className="container">
       <div className="row justify-content-center">
         <div className="col-12 col-sm-12 col-md-8">
           <div className="card">
             <div className="card-body">
-              <h4 className="card-title">Create Blockchain</h4>
+              <h4 className="card-title">{isEdit ? "Edit" : "Create"} User</h4>
               <hr />
               <div className="form-wrapper">
                 {Object.keys(validationError).length > 0 && (
@@ -96,9 +105,10 @@ export default function CreateBlockchain() {
                     </div>
                   </div>
                 )}
-                <Form onSubmit={saveBlockchain}>
-                  <FormInput label="Name" type="text" name="name" blockchain={blockchain} handleInputChange={handleInputChange} />
-                  <FormInputFile label="Image" name="image" changeImageHandler={changeImageHandler} />
+                <Form onSubmit={saveUser}>
+                  <FormInputGroup label="Name" type="text" name="name" user={user} handleInputChange={handleInputChange}/>
+                  <FormInputGroup label="Email" type="email" name="email" user={user} handleInputChange={handleInputChange}/>
+                  <FormInputGroup label="Password" type="password" name="password" user={user} handleInputChange={handleInputChange}/>
                   <Button variant="primary" className="mt-2" size="lg" block="block" type="submit">
                     Save
                   </Button>

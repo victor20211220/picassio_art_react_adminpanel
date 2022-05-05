@@ -5,20 +5,15 @@ const getAll = () => {
 const get = id => {
     return http.get(`/calendar/${id}`);
 };
-const create = data => {
-    return http.post("/calendar", data);
-};
-const update = (id, data) => {
-    return http.post(`/calendar/${id}`, data);
+const manage = (data, id) => {
+    if(typeof id === "undefined"){
+        return http.post("/calendar", data);
+    }else{
+        return http.post(`/calendar/${id}`, data);
+    }
 };
 const remove = id => {
     return http.delete(`/calendar/${id}`);
-};
-const removeAll = () => {
-    return http.delete(`/calendar`);
-};
-const findByTitle = title => {
-    return http.get(`/calendar?title=${title}`);
 };
 const bulkAction = (data) => {
     return http.post(`/calendar/bulk`, data);
@@ -26,10 +21,7 @@ const bulkAction = (data) => {
 export default {
     getAll,
     get,
-    create,
-    update,
+    manage,
     remove,
-    removeAll,
-    findByTitle,
     bulkAction
 };

@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from "react";
 import CalendarService from "../../services/CalendarService";
 import BlockchainService from "../../services/BlockchainService";
-import {positions} from '../../services/Positions';
+import AttributeService from "../../services/AttributeService";
+import { positions } from '../../services/Positions';
 import { useNavigate, useParams } from 'react-router-dom'
 import { Form, Button, Row, Col } from 'react-bootstrap';
 import Select from 'react-select';
 import Swal from 'sweetalert2';
 
-const options = [
-  { value: 'featured', label: 'Featured' },
-  { value: 'minting', label: 'Minting' }
-];
-
-console.log(positions)
-
-const FormInput = (props) => {
+const FormInputGroup = (props) => {
   const { label, type, name, calendar, handleInputChange } = props;
   return <Form.Group className="my-1">
     <Form.Label>{label}</Form.Label>
@@ -22,52 +16,55 @@ const FormInput = (props) => {
   </Form.Group>
 }
 
-export default function EditCalendar() {
-
+export default function ManageCalendar(props) {
+  const isEdit = props.isEdit;
   const { id } = useParams();
   const navigate = useNavigate();
   const initialCalendarState = {
     title: "",
     mint_date: "",
-    amount: "",
-    attrs: [],
+    attrs: "",
     description: "",
     blockchain: 0,
     mint_price: "",
     supply: "",
+    website: "",
     discord: "",
     twitter: "",
     image: "",
     position_id: 0,
+    is_published: true,
   };
 
 
   const [blockchains, setBlockchains] = useState([]);
+  const [attributes, setAttributes] = useState([]);
+  const [calendar, setCalendar] = useState(initialCalendarState);
 
-  // get row
   useEffect(() => {
-    fetchBlockchains();
-  }, [])
-
-  const fetchBlockchains = async () => {
-    BlockchainService.getAll().then(({ data }) => {
-      let blockchains = [];
-      data.map(item => {
-        blockchains.push({ value: item.id, label: item.name })
+    const getData = async () => {
+      let blockchains = await BlockchainService.getAll();
+      blockchains = blockchains.data.map(item => {
+        return { value: item.id, label: item.name }
       })
       setBlockchains(blockchains);
-    })
-  }
-
-  const [calendar, setCalendar] = useState(initialCalendarState);
-  useEffect(() => {
-    fetchRow()
+      let attributes = await AttributeService.getAll();
+      attributes = attributes.data.map(item => {
+        return { value: item.id, label: item.name }
+      })
+      setAttributes(attributes);
+      console.log(attributes);
+      if (isEdit)
+        fetchRow()  
+    }
+    getData();
   }, [])
+
+  // {"value":"minting","label":"Minting"}]
 
   const fetchRow = async () => {
     CalendarService.get(id).then(({ data }) => {
       let row = data.calendar;
-      row['attrs'] = JSON.parse(row['attrs']);
       setCalendar(row);
     }).catch(({ response }) => {
       Swal.fire({
@@ -83,7 +80,8 @@ export default function EditCalendar() {
     setCalendar({ ...calendar, [name]: value });
   };
   const changeAttrsHandler = option => {
-    setCalendar({ ...calendar, attrs: option });
+    let ids = option.map(item => item.value);
+    setCalendar({ ...calendar, attrs: ids.join(",") });
   };
 
   const changeSelectHandler = (option, key) => {
@@ -97,28 +95,24 @@ export default function EditCalendar() {
 
   // form validation submit
   const [validationError, setValidationError] = useState({})
-  const updateCalendar = async (e) => {
+  const submitCalendar = async (e) => {
     e.preventDefault();
-    const formData = new FormData()
-    formData.append('_method', 'PATCH');
+    const formData = new FormData();
+    if (isEdit) {
+      formData.append('_method', 'PATCH');
+    }
     for (const field in calendar) {
-      if (field === "image" && calendar[field] !== null) {
-        formData.append(field, calendar[field])
-      } else {
-        let value = calendar[field];
-        switch (field) {
-          case "attrs":
-            value = JSON.stringify(value);
-            break;
-          case "is_upcoming":
-            value = calendar[field] === true ? 1 : 0;
-            break;
-        }
-        formData.append(field, value);
+      let value = calendar[field];
+      switch (field) {
+        case "is_upcoming":
+        case "is_published":
+          value = calendar[field] === true ? 1 : 0;
+          break;
       }
+      formData.append(field, value);
     }
 
-    CalendarService.update(id, formData)
+    CalendarService.manage(formData, id)
       .then(({ data }) => {
         Swal.fire({
           icon: "success",
@@ -137,13 +131,17 @@ export default function EditCalendar() {
       })
   }
 
+  let attrs = calendar.attrs ? calendar.attrs.split(",").map(id => {
+    return attributes.find(obj => obj.value == id);
+  }) : [];
+
   return (
-    <div className="container">
+    <>
       <div className="row justify-content-center">
         <div className="col-12 col-sm-12 col-md-8">
           <div className="card">
             <div className="card-body">
-              <h4 className="card-title">Update Calendar</h4>
+              <h4 className="card-title">{isEdit ? "Edit" : "Create"} Calendar</h4>
               <hr />
               <div className="form-wrapper">
                 {Object.keys(validationError).length > 0 && (
@@ -161,10 +159,8 @@ export default function EditCalendar() {
                     </div>
                   </div>
                 )}
-                <Form onSubmit={updateCalendar}>
-
-                  <FormInput label="Title" type="text" name="title" calendar={calendar} handleInputChange={handleInputChange} />
-
+                <Form onSubmit={submitCalendar}>
+                  <FormInputGroup label="Title" type="text" name="title" calendar={calendar} handleInputChange={handleInputChange} />
                   <Row className="my-1">
                     <Col>
                       <Form.Group>
@@ -185,18 +181,14 @@ export default function EditCalendar() {
                           classNamePrefix="select"
                         />
                       </Form.Group>
-                      {/* <FormInput label="Blockchain" type="text" name="blockchain" calendar={calendar} handleInputChange={handleInputChange} /> */}
-                    </Col>
-                    <Col sm={6}>
-                      <FormInput label="Amount" type="text" name="amount" calendar={calendar} handleInputChange={handleInputChange} />
                     </Col>
                   </Row>
                   <Row>
                     <Col sm={6}>
-                      <FormInput label="Mint Date" type="date" name="mint_date" calendar={calendar} handleInputChange={handleInputChange} />
+                      <FormInputGroup label="Mint Date" type="date" name="mint_date" calendar={calendar} handleInputChange={handleInputChange} />
                     </Col>
                     <Col sm={6}>
-                      <FormInput label="Mint Price" type="text" name="mint_price" calendar={calendar} handleInputChange={handleInputChange} />
+                      <FormInputGroup label="Mint Price" type="text" name="mint_price" calendar={calendar} handleInputChange={handleInputChange} />
                     </Col>
                   </Row>
                   <Row>
@@ -204,10 +196,11 @@ export default function EditCalendar() {
                       <Form.Group>
                         <Form.Label>Attributes</Form.Label>
                         <Select
-                          value={calendar.attrs}
+                          value={attrs}
+                          isOptionDisabled={() => attrs.length >= 2}
                           isMulti
                           onChange={changeAttrsHandler}
-                          options={options}
+                          options={attributes}
                           name="attrs"
                           className="basic-multi-select"
                           classNamePrefix="select"
@@ -215,17 +208,22 @@ export default function EditCalendar() {
                       </Form.Group>
                     </Col>
                     <Col sm={6}>
-                      <FormInput label="Supply" type="text" name="supply" calendar={calendar} handleInputChange={handleInputChange} />
+                      <FormInputGroup label="Supply" type="text" name="supply" calendar={calendar} handleInputChange={handleInputChange} />
                     </Col>
                   </Row>
                   <Row>
                     <Col>
-                      <FormInput label="Discord" type="url" name="discord" calendar={calendar} handleInputChange={handleInputChange} />
+                      <FormInputGroup label="Website" type="url" name="website" calendar={calendar} handleInputChange={handleInputChange} />
                     </Col>
                   </Row>
                   <Row>
                     <Col>
-                      <FormInput label="Twitter" type="url" name="twitter" calendar={calendar} handleInputChange={handleInputChange} />
+                      <FormInputGroup label="Discord" type="url" name="discord" calendar={calendar} handleInputChange={handleInputChange} />
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col>
+                      <FormInputGroup label="Twitter" type="url" name="twitter" calendar={calendar} handleInputChange={handleInputChange} />
                     </Col>
                   </Row>
                   <Form.Group controlId="Image" className="mb-3">
@@ -255,6 +253,6 @@ export default function EditCalendar() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import UsersService from '../../services/UsersService';
+import AttributeService from '../../services/AttributeService';
 
 import Button from 'react-bootstrap/Button'
 import Swal from 'sweetalert2'
 
-export default function UsersList() {
+export default function AttributeList() {
     const [rows, setRows] = useState([])
 
     useEffect(() => {
@@ -13,7 +13,7 @@ export default function UsersList() {
     }, [])
 
     const fetchRows = async () => {
-        UsersService.getAll().then(({ data }) => {
+        AttributeService.getAll().then(({ data }) => {
             setRows(data)
         })
     }
@@ -35,7 +35,7 @@ export default function UsersList() {
             return;
         }
 
-        UsersService.remove(id).then(({ data }) => {
+        AttributeService.remove(id).then(({ data }) => {
             Swal.fire({
                 icon: "success",
                 text: data.message
@@ -51,16 +51,17 @@ export default function UsersList() {
 
     return (
         <>
-            <div><Link className='btn btn-primary mb-2' to={"/users/add"}>
-                Create
-            </Link></div>
+            <div>
+                <Link className='btn btn-primary mb-2' to={"/attributes/add"}>
+                    Create
+                </Link>
+            </div>
             <div className="table-responsive">
                 <table className="table table-bordered mb-0 text-center">
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Email</th>
-                            <th>Created at</th>
+                            <th>Color</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -70,10 +71,9 @@ export default function UsersList() {
                                 rows.map((row, key) => (
                                     <tr key={key}>
                                         <td>{row.name}</td>
-                                        <td>{row.email}</td>
-                                        <td>{new Date(row.created_at).toLocaleDateString(undefined)}</td>
+                                        <td><span className='color-span d-inline-block' style={{backgroundColor:row.color}}></span></td>
                                         <td>
-                                            <Link to={`/users/${row.id}`} className='btn btn-success me-2'>
+                                            <Link to={`/attributes/${row.id}`} className='btn btn-success me-2'>
                                                 Edit
                                             </Link>
                                             <Button variant="danger" onClick={() => deleteRow(row.id)}>
