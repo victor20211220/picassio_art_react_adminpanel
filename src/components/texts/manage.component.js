@@ -1,33 +1,39 @@
 import React, { useState, useEffect } from "react";
-import AttributeService from "../../services/AttributeService";
-import { useNavigate, useParams } from 'react-router-dom'
-import { Form, Button} from 'react-bootstrap';
+import TextsService from "../../services/TextsService";
+import { Form, Button } from 'react-bootstrap';
 import Swal from 'sweetalert2';
 
 
-const FormInput = (props) => {
-  const { label, type, name, attribute, handleInputChange } = props;
+const FormTextarea = (props) => {
+  const { label, name, text, handleInputChange } = props;
   return <Form.Group className="my-1">
     <Form.Label>{label}</Form.Label>
-    <Form.Control type={type} value={attribute[name]} name={name} onChange={handleInputChange} />
+    <Form.Control as="textarea" rows={name.includes("footer") ? 8: 2} value={text[name]} name={name} onChange={handleInputChange} />
   </Form.Group>
 }
 
+const fields = {
+  header_title : "Header Title",
+  header_description: "Header Description",
+  marquee_title: "Marquee Title",
+  featured_title: "Featured Title",
+  featured_description: "Featured Description",
+  calendar_title: "Calendar Title",
+  calendar_description: "Calendar Description",
+  footer_description: "Footer Description",
+};
 
 
-export default function ManageAttribute(props) {
-  const isEdit = props.isEdit;
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const initialState = {
-    name: "",
-    color: "",
-  };
-  const [attribute, setAttribute] = useState(initialState);
+export default function ManageTexts() {
+  const initialState = {};
+  Object.entries(fields).map(([key, value]) => {
+    initialState[key] = ""
+  })
+  const [text, setText] = useState(initialState);
 
-  const fetchRow = async () => {
-    AttributeService.get(id).then(({ data }) => {
-      setAttribute(data.attribute);
+  const fetchRow = () => {
+    TextsService.getAll().then(({ data }) => {
+      setText(data.text);
     }).catch(({ response }) => {
       Swal.fire({
         text: response.data.message,
@@ -38,36 +44,33 @@ export default function ManageAttribute(props) {
 
   // get row
   useEffect(() => {
-    if (isEdit)
-      fetchRow()
+    fetchRow()
   }, [])
 
 
 
   const handleInputChange = event => {
     let { name, value } = event.target;
-    setAttribute({ ...attribute, [name]: value });
+    setText({ ...text, [name]: value });
   };
-  console.log(attribute);
+  console.log(text);
 
 
   // form validation submit
   const [validationError, setValidationError] = useState({})
-  const submitAttribute = async (e) => {
+  const submitForm = (e) => {
     e.preventDefault();
     const formData = new FormData()
-    if (isEdit) formData.append('_method', 'PATCH');
-    for (const field in attribute) {
-      formData.append(field, attribute[field]);
+    for (const field in text) {
+      formData.append(field, text[field]);
     }
 
-    AttributeService.manage(formData, id)
+    TextsService.manage(formData)
       .then(({ data }) => {
         Swal.fire({
           icon: "success",
           text: data.message
         })
-        navigate("/attributes");
       }).catch(({ response }) => {
         if (response.status === 422) {
           setValidationError(response.data.errors)
@@ -85,7 +88,7 @@ export default function ManageAttribute(props) {
       <div className="col-12 col-sm-12 col-md-8">
         <div className="card">
           <div className="card-body">
-            <h4 className="card-title">{isEdit ? "Edit" : "Create"} Attribute</h4>
+            <h4 className="card-title">Manage Texts</h4>
             <hr />
             <div className="form-wrapper">
               {Object.keys(validationError).length > 0 && (
@@ -103,9 +106,10 @@ export default function ManageAttribute(props) {
                   </div>
                 </div>
               )}
-              <Form onSubmit={submitAttribute}>
-                <FormInput label="Name" type="text" name="name" attribute={attribute} handleInputChange={handleInputChange} />
-                <FormInput label="Color" type="color" name="color" attribute={attribute} handleInputChange={handleInputChange} />
+              <Form onSubmit={submitForm}>
+                {Object.entries(fields).map(([key, value]) => (
+                  <FormTextarea label={value} name={key} text={text} handleInputChange={handleInputChange} />
+                ))}
                 <Button variant="primary" className="mt-2" size="lg" block="block" type="submit">
                   Save
                 </Button>

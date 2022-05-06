@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+
 import PromoService from '../../services/PromoService';
 import { positions } from '../../services/Positions';
 
@@ -206,6 +208,9 @@ export default function PromoList() {
                                         <td>{row.total_price}</td>
                                         <td>{row.is_paid ? "Yes" : "No"}</td>
                                         <td>
+                                            <Link to={`/promos/${row.id}`} className='btn btn-sm btn-success me-2'>
+                                                Edit
+                                            </Link>
                                             <Button variant={row.is_paid ? "secondary" : "primary"} size="sm" className="ms-2" onClick={() => updatePaid(row.id, row.is_paid)}>
                                                 {row.is_paid ? "Unpaid" : "Paid"}
                                             </Button>

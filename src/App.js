@@ -18,6 +18,8 @@ import CalendarList from "./components/calendar/list.component";
 import UsersList from "./components/users/list.component";
 import ManageUser from "./components/users/manage.component";
 import PromoList from "./components/promos/list.component";
+import ManagePromo from "./components/promos/manage.component";
+import ManageTexts from "./components/texts/manage.component";
 
 import EventBus from "./common/EventBus";
 
@@ -49,6 +51,7 @@ function App() {
     { 'path': '/users', 'element': <UsersList />, label: "Users" },
     { 'path': '/users/add', 'element': <ManageUser isEdit={false} /> },
     { 'path': '/users/:id', 'element': <ManageUser isEdit={true} /> },
+    { 'path': '/texts', 'element': <ManageTexts />, label: "Texts" },
     { 'path': '/blockchains', 'element': <BlockchainList />, label: "Blockchains" },
     { 'path': '/blockchains/add', 'element': <ManageBlockchain isEdit={false} /> },
     { 'path': '/blockchains/:id', 'element': <ManageBlockchain isEdit={true} /> },
@@ -59,6 +62,7 @@ function App() {
     { 'path': '/calendar/add', 'element': <ManageCalendar isEdit={false} /> },
     { 'path': '/calendar/:id', 'element': <ManageCalendar isEdit={true} /> },
     { 'path': '/promos', 'element': <PromoList />, label: "Promos" },
+    { 'path': '/promos/:id', 'element': <ManagePromo/> },
     { 'path': '/profile', 'element': <Profile />, label: "Profile" },
   ];
 
